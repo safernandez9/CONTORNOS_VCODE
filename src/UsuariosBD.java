@@ -1,8 +1,7 @@
-package intro_basesdatos_mariadb;
+
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -16,7 +15,7 @@ public class UsuariosBD {
      * Lista los usuarios de la base de datos
      */
     public static void listarUsuarios() {
-        Connection conexion = conectar();
+        Connection conexion = Conexion.conectar();
 
         Statement sentencia;
         try {
@@ -28,12 +27,12 @@ public class UsuariosBD {
                 // Procesa los datos
                 int id = resultado.getInt("id");
                 String username = resultado.getString("username");
-                String password = resultado.getString("password");
+                //String password = resultado.getString("password");
                 Timestamp createdAt = resultado.getTimestamp("created_at");
 
                 // Procesa los datos
                 System.out.println(
-                        "ID: " + id + ", username: " + username + "(" + password + "), createdAt: " + createdAt);
+                        "ID: " + id + ", username: " + username + ", createdAt: " + createdAt);
             }
 
             resultado.close();
@@ -53,7 +52,7 @@ public class UsuariosBD {
      */
     public static boolean loginUsuario(String username, String password) {
         boolean loginOk = false;
-        Connection conexion = conectar();
+        Connection conexion = Conexion.conectar();
 
         Statement sentencia;
         try {
@@ -89,7 +88,7 @@ public class UsuariosBD {
      */
     public static boolean cambiarPassword(String username, String password) {
         boolean cambiarPassword = false;
-        Connection conexion = conectar();
+        Connection conexion = Conexion.conectar();
 
         Statement sentencia;
         try {
@@ -138,22 +137,53 @@ public class UsuariosBD {
     }
 
     /**
-     * Conecta con la base de datos
+     * Inicia sesión de usuario
+     * Solicita credenciales de inicio de sesión, y si son correctas devuelve el
+     * nombre de usuario.
      * 
-     * @return Conexión con la base de datos
+     * @return Usuario que ha iniciado sesión
      */
-    private static Connection conectar() {
-        Connection con = null;
+    public static String iniciarSesion() {
+        do {
+            System.out.println("LOGIN DE USUARIO");
+            System.out.print("Usuario: ");
+            String usuario = System.console().readLine();
+            System.out.print("Contraseña: ");
+            String password = new String(System.console().readPassword());
+            if (loginUsuario(usuario, password)) {
+                return usuario;
+            } else {
+                System.out.println("Usuario o contraseña incorrectos");
+            }
+        } while (true);
+    }
 
-        String url = "jdbc:mysql://" + Conexion.HOST + ":" + Conexion.PORT + "/" + Conexion.DATABASE;
-
+    /**
+     * Crea un nuevo usuario
+     * Solicita credenciales de nuevo usuario, y si se crea correctamente devuelve
+     * true
+     * 
+     * @return true si se creó el usuario
+     */
+    public static boolean crearUsuario() {
+        Connection conexion = Conexion.conectar();
+        Statement sentencia;
         try {
-            con = DriverManager.getConnection(url, Conexion.USER, Conexion.PASSWORD);
+            sentencia = conexion.createStatement();
+            System.out.print("Usuario: ");
+            String usuario = System.console().readLine();
+            System.out.print("Contraseña: ");
+            String password = new String(System.console().readPassword());
+            int resultado = sentencia.executeUpdate("INSERT INTO user (username, password) VALUES ('" + usuario + "', '"
+                    + generarStringHash2Y(password) + "')");
+            sentencia.close();
+            conexion.close();
+            return resultado == 1;
         } catch (SQLException e) {
-            System.out.println("Error al conectar con la BD.");
+            e.printStackTrace();
+            //System.out.println("Error al crear el usuario");
+            return false;
         }
-
-        return con;
     }
 
     /**
@@ -164,24 +194,54 @@ public class UsuariosBD {
         System.out.println("GESTIÓN DE USUARIOS");
         System.out.println("*******************\n");
         System.out.println("BASE DE DATOS: " + Conexion.DATABASE + " en " + Conexion.HOST + ":" + Conexion.PORT);
-        System.out.println();
+        String opcion;
+        do {
+            System.out.println();
+            System.out.println("1. LISTADO DE USUARIOS:");
+            System.out.println("2. CREACIÓN DE USUARIO");
+            System.out.println("3. LOGIN DE USUARIO");
+            System.out.println("4. CAMBIO DE CONTRASEÑA");
+            System.out.println("0. SALIR");
 
-        System.out.println("LISTADO DE USUARIOS:");
-        listarUsuarios();
-        System.out.println();
+            System.out.println();
+            System.out.print("Opción: ");
+            opcion = System.console().readLine();
+            System.out.println();
 
-        System.out.println("LOGIN DE USUARIO");
-        System.out.print("Usuario: ");
-        String usuario = System.console().readLine();
-        System.out.print("Contraseña: ");
-        String password = new String(System.console().readPassword());
-        System.out.println(loginUsuario(usuario, password) ? "Login OK" : "Login KO");
+            switch (opcion) {
+                case "1":
+                    listarUsuarios();
+                    break;
+                case "2":
+                    System.out.println(crearUsuario() ? "Usuario creado" : "Error al crear el usuario");
+                    break;
+                case "3":
+                    System.out.println("LOGIN DE USUARIO");
+                    System.out.print("Usuario: ");
+                    String usuario = System.console().readLine();
+                    System.out.print("Contraseña: ");
+                    String password = new String(System.console().readPassword());
+                    System.out.println(loginUsuario(usuario, password) ? "Login OK" : "Login KO");
+                    break;
+                case "4":
+                    System.out.println("CAMBIO DE CONTRASEÑA");
+                    System.out.print("Usuario: ");
+                    String usuarioCambio = System.console().readLine();
+                    System.out.print("Nueva contraseña: ");
+                    String newPassword = new String(System.console().readPassword());
+                    System.out.println(
+                            cambiarPassword(usuarioCambio, newPassword) ? "Contraseña cambiada"
+                                    : "Error al cambiar la contraseña");
+                    break;
+                case "0":
+                    System.out.println("Hasta pronto...\n");
+                    break;
+                default:
+                    System.out.println("Opción no válida");
+                    break;
+            }
+        } while (!opcion.equals("0"));
 
-        System.out.println("CAMBIO DE CONTRASEÑA");
-        System.out.print("Nueva contraseña: ");
-        String newPassword = new String(System.console().readPassword());
-        System.out.println(
-                cambiarPassword(usuario, newPassword) ? "Contraseña cambiada" : "Error al cambiar la contraseña");
     }
 
 }

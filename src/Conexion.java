@@ -1,22 +1,19 @@
-package intro_basesdatos_mariadb;
-
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import org.mariadb.jdbc.Connection;
-
-public class Conexion {
+class Conexion {
 
     // Datos de conexión a la base de datos (localhost)
     static final String HOST = "localhost";
-    static final String DATABASE = "nombrebaseprueba";
+    static final String DATABASE = "compartirviaje";
     static final String USER = "root";
     static final String PASSWORD = "";
     static final String PORT = "3306";
 
     /**
      * Conecta con la base de datos
-     *
+     * 
      * @return Conexión con la base de datos
      */
     public static Connection conectar() {
