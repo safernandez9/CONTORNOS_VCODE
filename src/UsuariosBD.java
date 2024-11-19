@@ -26,13 +26,13 @@ public class UsuariosBD {
             while (resultado.next()) {
                 // Procesa los datos
                 int id = resultado.getInt("id");
-                String username = resultado.getString("username");
+                String user_name = resultado.getString("user_name");
                 //String password = resultado.getString("password");
                 Timestamp createdAt = resultado.getTimestamp("created_at");
 
                 // Procesa los datos
                 System.out.println(
-                        "ID: " + id + ", username: " + username + ", createdAt: " + createdAt);
+                        "ID: " + id + ", user_name: " + user_name + ", createdAt: " + createdAt);
             }
 
             resultado.close();
@@ -46,11 +46,11 @@ public class UsuariosBD {
     /**
      * Comprueba si un usuario y contraseña son correctos
      * 
-     * @param username Usuario
+     * @param user_name Usuario
      * @param password Contraseña
      * @return true si el usuario y contraseña son correctos
      */
-    public static boolean loginUsuario(String username, String password) {
+    public static boolean loginUsuario(String user_name, String password) {
         boolean loginOk = false;
         Connection conexion = Conexion.conectar();
 
@@ -58,7 +58,7 @@ public class UsuariosBD {
         try {
             sentencia = conexion.createStatement();
 
-            ResultSet resultado = sentencia.executeQuery("SELECT * FROM user WHERE username LIKE '" + username + "'");
+            ResultSet resultado = sentencia.executeQuery("SELECT * FROM user WHERE user_name LIKE '" + user_name + "'");
 
             if (resultado.next()) {
                 // Si existe el usuario valida la contraseña con BCrypt
@@ -82,11 +82,11 @@ public class UsuariosBD {
     /**
      * Cambia la contraseña de un usuario
      * 
-     * @param username Usuario
+     * @param user_name Usuario
      * @param password Nueva contraseña
      * @return true si se cambió la contraseña
      */
-    public static boolean cambiarPassword(String username, String password) {
+    public static boolean cambiarPassword(String user_name, String password) {
         boolean cambiarPassword = false;
         Connection conexion = Conexion.conectar();
 
@@ -94,7 +94,7 @@ public class UsuariosBD {
         try {
             sentencia = conexion.createStatement();
             int resultado = sentencia.executeUpdate("UPDATE user SET password='" + generarStringHash2Y(password)
-                    + "' WHERE username LIKE '" + username + "'");
+                    + "' WHERE user_name LIKE '" + user_name + "'");
 
             if (resultado == 1) {
                 // Si se cambió la contraseña
@@ -174,7 +174,7 @@ public class UsuariosBD {
             String usuario = System.console().readLine();
             System.out.print("Contraseña: ");
             String password = new String(System.console().readPassword());
-            int resultado = sentencia.executeUpdate("INSERT INTO user (username, password) VALUES ('" + usuario + "', '"
+            int resultado = sentencia.executeUpdate("INSERT INTO user (user_name, password) VALUES ('" + usuario + "', '"
                     + generarStringHash2Y(password) + "')");
             sentencia.close();
             conexion.close();
